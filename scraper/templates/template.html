@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Page</title>
+    {% load static %}
+
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="{% static '/styles.css' %}">
+  </head>
+  <body>
+    <div class="container">
+      <div class="selectN">اختر النمرة المناسبة</div>
+
+      <!-- Filter buttons -->
+      <div class="filters">
+        {% for size in sizes %}
+          <button class="filter-button" onclick="window.location.href='/products/size/{{ size }}'">{{ size }}</button>
+        {% endfor %}
+      </div>
+
+      <!-- Product grid -->
+      <div class="product-grid">
+        {% for product in products %}
+          <div class="product-card">
+            <img class="product-image" src="{{ product.image }}" alt="{{ product.name }}">
+            <div class="product-info">
+              <h3 class="product-name">{{ product.name }}</h3>
+              <p class="product-price">{{ product.price }} ₪</p>
+              <button class="add-to-cart" onclick="addToCart('{{ selected_size }} الحجم', {{ product.price }}, '{{ product.image | escapejs }}')">إضافة للسلة</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Cart section (should be visible even after page reload) -->
+      <div class="cart-section" id="cart-section">
+        <h2>سلة التسوق</h2>
+        <ul class="cart-items">
+          <!-- Cart items will be dynamically added by JavaScript -->
+        </ul>
+        <p class="total-price">إجمالي: <span class="total-price">0</span> ₪</p>
+        <button class="checkout" onclick="sendToWhatsApp()">اعتماد الطلب من خلال واتس اب</button>
+      </div>
+    </div>
+
+    <!-- Sample JavaScript data -->
+    <script>
+      const products = [
+        { name: "ترينج بناتي Zara بيبي ميطون فرو - زهر", price: 28, image: "path/to/image1.jpg" },
+        { name: "ترينج بناتي Zara بيبي ميطون فرو - بنفسجي", price: 28, image: "path/to/image2.jpg" }
+      ];
+
+      // Cart-related JavaScript functions
+      let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+      function addToCart(name, price, image) {
+        const item = { name, price, image };
+        cartItems.push(item);
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+        updateCartDisplay();
+        showCart();
+      }
+
+      function removeFromCart(index) {
+        cartItems.splice(index, 1);
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+        updateCartDisplay();
+      }
+
+      function updateCartDisplay() {
+  const cartList = document.querySelector('.cart-items');
+  const totalPriceElem = document.querySelector('.total-price');
+  cartList.innerHTML = '';
+
+  let totalPrice = 0;
+
+  cartItems.forEach((item, index) => {
+    const listItem = document.createElement('li');
+    listItem.classList.add('cart-item');
+    listItem.innerHTML = `
+      <img src="${item.image}" alt="${item.name}" class="cart-item-image" />
+      <p>${item.name}</p>
+      <p>${item.price} ₪</p>
+      <button onclick="removeFromCart(${index})">حذف</button>
+    `;
+    cartList.appendChild(listItem);
+    totalPrice += item.price;
+  });
+
+  totalPriceElem.textContent = totalPrice;
+
+  // Scroll the cart to the bottom
+  cartList.scrollTop = cartList.scrollHeight;
+
+  // If the cart has items, ensure the cart section is visible
+  if (cartItems.length > 0) {
+    document.getElementById('cart-section').classList.add('active');
+  } else {
+    document.getElementById('cart-section').classList.remove('active');
+  }
+}
+
+
+      function showCart() {
+        const cartSection = document.getElementById('cart-section');
+        cartSection.classList.add('active');
+      }
+
+      // Send cart info to WhatsApp
+      function sendToWhatsApp() {
+        let cartMessage = "تفاصيل السلة:\n";
+        let totalPrice = 0;
+
+        cartItems.forEach(item => {
+          cartMessage += `${item.name} - ${item.price} ₪\n`;
+          cartMessage += `صورة المنتج: ${item.image}\n`;  // Append image URL
+          totalPrice += item.price;
+        });
+
+        cartMessage += `\nإجمالي: ${totalPrice} ₪`;
+
+        // WhatsApp URL with cart message
+        const whatsappUrl = `https://wa.me/+972592753581/?text=${encodeURIComponent(cartMessage)}`;
+
+        // Redirect to WhatsApp
+        window.location.href = whatsappUrl;
+      }
+
+      // Initial update of cart display
+      updateCartDisplay();
+    </script>
+  </body>
+</html>
